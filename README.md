@@ -48,7 +48,8 @@ Implementación de un servidor web concurrente en **C** utilizando el patrón de
 * **`src/server_pool_sem.c`**: Servidor concurrente basado en Thread Pool sincronizado íntegramente con semáforos POSIX.
 * **`src/load_client.c`**: Cliente de carga multihilo instrumentado con `clock_gettime(CLOCK_MONOTONIC)` para medir throughput y latencia.
 * **`scripts/benchmark.py`**: Script de automatización que corre los escenarios, calcula estadísticas (media y desviación estándar) y genera gráficos.
-* **`results/`**: Contiene los datos brutos en CSV (`benchmark_results.csv`) y los gráficos generados.
+* **`results_condvar/`**: Contiene los datos brutos en CSV (`benchmark_results.csv`) y los gráficos generados.
+* **`results_sem/`**: Contiene los datos brutos en CSV (`benchmark_results.csv`) y los gráficos generados.
 
 ---
 
