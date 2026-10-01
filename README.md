@@ -6,7 +6,9 @@ Implementación de un servidor web concurrente en **C** utilizando el patrón de
 
 ## Arquitectura
 
-```
+### 1. Sincronización con Variables de Condición (`server_pool`)
+
+```text
                         +----------------------------+
                         |  Clientes (load_client)    |
                         +--------------+-------------+
@@ -25,6 +27,50 @@ Implementación de un servidor web concurrente en **C** utilizando el patrón de
            |     - Variables de condición: not_empty y not_full        |
            +---------------------------+-------------------------------+
                                        | conn_queue_pop()
+           +---------------------------+-------------------------------+
+           |                                                           |
+           v                                                           v
++----------------------+                                    +----------------------+
+|   Worker Thread 1    |                                    |   Worker Thread N    |
+| (Consumidor Pool)    |                                    | (Consumidor Pool)    |
+| Atiende HTTP Request |                                    | Atiende HTTP Request |
+| y cierra socket      |                                    | y cierra socket      |
++----------------------+                                    +----------------------+
+```
+
+### 2. Sincronización con Semáforos POSIX (`server_pool_sem`)
+
+```text
+                        +----------------------------+
+                        |  Clientes (load_client)    |
+                        +--------------+-------------+
+                                       | Conexiones TCP
+                                       v
+                     +----------------------------------+
+                     |    Hilo Principal (Productor)    |
+                     |         accept() en bucle        |
+                     +-----------------+----------------+
+                                       | conn_queue_sem_push()
+                                       | 1. sem_wait(sem_spaces)
+                                       | 2. pthread_mutex_lock(mutex)
+                                       | 3. Encolar descriptor
+                                       | 4. pthread_mutex_unlock(mutex)
+                                       | 5. sem_post(sem_items)
+                                       v
+           +-----------------------------------------------------------+
+           |       Cola Sincronizada con Semáforos (sem_t)             |
+           |     - Buffer circular de descriptores de sockets          |
+           |     - Exclusión mutua: pthread_mutex_t mutex              |
+           |     - Semáforos contadores:                               |
+           |         * sem_spaces (inicia en N, controla espacios)     |
+           |         * sem_items  (inicia en 0, controla elementos)    |
+           +---------------------------+-------------------------------+
+                                       | conn_queue_sem_pop()
+                                       | 1. sem_wait(sem_items)
+                                       | 2. pthread_mutex_lock(mutex)
+                                       | 3. Desencolar descriptor
+                                       | 4. pthread_mutex_unlock(mutex)
+                                       | 5. sem_post(sem_spaces)
            +---------------------------+-------------------------------+
            |                                                           |
            v                                                           v
