@@ -1,0 +1,7 @@
+# Build artifacts
+bin/
+obj/
+*.o
+*.d
+*.dSYM/
+.DS_Store
